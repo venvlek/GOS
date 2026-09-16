@@ -17,11 +17,11 @@ export default function Logo({ size = 22 }) {
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
         />
       </div>
-      <div className="leading-tight">
-        <div className="goss-serif" style={{ fontSize: 15, fontWeight: 600, color: C.green }}>
+      <div className="leading-tight min-w-0">
+        <div className="goss-serif truncate" style={{ fontSize: 14, fontWeight: 600, color: C.green }}>
           Garden of Success
         </div>
-        <div style={{ fontSize: 11, color: C.inkSoft, letterSpacing: 0.2 }}>Register &amp; Diary</div>
+        <div className="hidden sm:block" style={{ fontSize: 11, color: C.inkSoft, letterSpacing: 0.2 }}>Register &amp; Diary</div>
       </div>
     </div>
   );

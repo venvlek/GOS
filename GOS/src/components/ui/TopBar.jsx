@@ -6,9 +6,9 @@ import Button from './Button';
 
 export default function TopBar({ role, subtitle, onLogout, right }) {
   return (
-    <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: `1px solid ${C.line}` }}>
-      <Logo size={20} />
-      <div className="flex items-center gap-3">
+    <div className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3.5 sm:py-4" style={{ borderBottom: `1px solid ${C.line}` }}>
+      <Logo size={18} />
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         {right}
         <div className="hidden sm:block text-right">
           <div style={{ fontSize: 13, fontWeight: 600 }}>{role}</div>
