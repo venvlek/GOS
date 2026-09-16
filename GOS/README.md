@@ -103,8 +103,49 @@ If you need the original file preserved byte-for-byte (e.g. for
 re-download), that requires real file storage (S3-style + a small API)
 rather than this front-end-only setup.
 
+## Setting up shared storage (Supabase) — do this first
+
+This app now stores everything in a real hosted database instead of your
+browser, so the principal and every teacher genuinely see the same data
+from their own devices. One-time setup:
+
+1. Go to [supabase.com](https://supabase.com), sign up free, and create a
+   new project (any name/region/password — you won't need the DB password
+   day-to-day).
+2. In your project, open **SQL Editor -> New query**, paste in the contents
+   of `supabase-setup.sql` (in this folder), and run it. This creates the
+   one table the whole app uses.
+3. Open **Project Settings -> API**. Copy the **Project URL** and the
+   **anon public** key.
+4. In this project folder, copy `.env.example` to a new file named `.env`,
+   and paste those two values in:
+   ```
+   VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+   VITE_SUPABASE_ANON_KEY=your-anon-public-key
+   ```
+5. `npm install` (pulls in the Supabase client), then `npm run dev`.
+
+That's it — `src/lib/storage.js` is the only place that talks to the
+database, so nothing else in the app needed to change.
+
+### Security note
+
+There's no per-user login at the database level — only the app's own PIN
+screens (principal PIN, teacher name+PIN), which are a UI convenience, not
+real access control. The Supabase "anon" key is meant to be public (it
+ships inside the built app), and the setup script's policies let anyone
+holding that key read and write the whole table directly, bypassing the
+app entirely. For a small internal school tool this is a common, acceptable
+trade-off — just don't publish your `.env` values anywhere public, and know
+that this isn't the same as having real per-user security. If that ever
+needs to be tighter (e.g. outside people could plausibly get the URL/key),
+the next step up is Supabase Auth with row-level policies scoped per user,
+which is a bigger addition than today's change.
+
 ## Portability
 
-`lib/storage.js` wraps `window.storage`, which only exists inside a
-Claude Artifact. `src/lib/storageShim.js` (loaded from `main.jsx`) fakes
-the same API with `localStorage` so the app runs as a normal website too.
+`lib/storage.js` is a two-function wrapper (`storageGet`/`storageSet`)
+around a single Supabase table. Every component only ever calls those two
+functions — nothing else in the app knows or cares that Supabase is behind
+them. If you ever wanted to swap the backend (a different database, a
+custom API, etc.), this is the one file to change.

@@ -1,20 +1,33 @@
-// Thin wrapper around window.storage (Claude Artifact persistent storage,
-// shimmed with localStorage outside the Artifact — see storageShim.js).
+// Every piece of the app's data — classes, teachers, students, attendance,
+// lesson notes, diary, holidays, terms — goes through these two functions
+// and a single Postgres table (see supabase-setup.sql). That's what makes
+// data genuinely shared: every device talking to the same project sees the
+// same rows, unlike the earlier localStorage-only version.
+import { supabase } from './supabaseClient';
 
-export async function storageGet(key, shared) {
+// `shared` is kept as a no-op second argument so every existing call site
+// (storageGet(key, true), storageSet(key, value, true)) keeps working
+// unchanged — everything in this app is shared school-wide anyway.
+export async function storageGet(key) {
   try {
-    const res = await window.storage.get(key, shared);
-    return res ? JSON.parse(res.value) : null;
-  } catch {
+    const { data, error } = await supabase.from('store').select('value').eq('key', key).maybeSingle();
+    if (error) throw error;
+    return data ? data.value : null;
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(`storageGet("${key}") failed:`, e.message || e);
     return null;
   }
 }
 
-export async function storageSet(key, value, shared) {
+export async function storageSet(key, value) {
   try {
-    await window.storage.set(key, JSON.stringify(value), shared);
+    const { error } = await supabase.from('store').upsert({ key, value, updated_at: new Date().toISOString() });
+    if (error) throw error;
     return true;
-  } catch {
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.error(`storageSet("${key}") failed:`, e.message || e);
     return false;
   }
 }
@@ -31,14 +44,11 @@ export const TERMS_KEY = 'terms';
 export const dayKey = (classId, date) => `day:${classId}:${date}`;
 export const studentsKey = (classId) => `students:${classId}`;
 
-// Storage keys can't contain spaces/punctuation, so subject names get slugged.
 export const slug = (s) =>
   (s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'x';
 
-// Weekly lesson note for one class + subject.
 export const lessonWeekKey = (classId, subject, weekStart) =>
   `lesson:${classId}:${slug(subject)}:${weekStart}`;
 
-// Termly diary / scheme of work for one class + subject.
 export const diaryKey = (classId, subject, termId) =>
   `diary:${classId}:${slug(subject)}:${termId}`;
