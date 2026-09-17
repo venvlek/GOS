@@ -21,7 +21,14 @@ export default function TeacherApp({ config, teacher, onLogout }) {
   // Classes this teacher takes the register for (Attendance / Statistics).
   const classTeacherClasses = config.classes.filter((c) => c.classTeacherId === teacher.id);
 
-  // Subject+class combos this teacher teaches (Lesson notes / Diary).
+  // Of those, the "primary style" ones where this teacher covers every
+  // subject themselves (Lesson notes / Diary work at the CLASS level here).
+  const allSubjectsClasses = classTeacherClasses
+    .filter((c) => c.classType === 'primary')
+    .map((c) => ({ id: c.id, name: c.name }));
+
+  // Subject+class combos for secondary-style teaching (Lesson notes / Diary
+  // work per SUBJECT here).
   const assignments = (teacher.teachingAssignments || []).map((a) => ({
     ...a,
     className: config.classes.find((c) => c.id === a.classId)?.name || '—',
@@ -34,8 +41,22 @@ export default function TeacherApp({ config, teacher, onLogout }) {
         <TabBar tabs={TABS} active={tab} onChange={setTab} />
         <div className="p-5 max-w-3xl mx-auto">
           {tab === 'attendance' && <AttendanceTab classes={classTeacherClasses} teacherName={teacher.name} />}
-          {tab === 'lessonnotes' && <LessonNotesTab assignments={assignments} teacherName={teacher.name} />}
-          {tab === 'diary' && <DiaryTab assignments={assignments} teacherName={teacher.name} />}
+          {tab === 'lessonnotes' && (
+            <LessonNotesTab
+              allSubjectsClasses={allSubjectsClasses}
+              assignments={assignments}
+              teacherId={teacher.id}
+              teacherName={teacher.name}
+            />
+          )}
+          {tab === 'diary' && (
+            <DiaryTab
+              allSubjectsClasses={allSubjectsClasses}
+              assignments={assignments}
+              teacherId={teacher.id}
+              teacherName={teacher.name}
+            />
+          )}
           {tab === 'stats' && <StatisticsTab classes={classTeacherClasses} />}
         </div>
       </div>
