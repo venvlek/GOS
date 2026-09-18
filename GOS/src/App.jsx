@@ -6,6 +6,7 @@ import LoadingScreen from './components/ui/LoadingScreen';
 import LoginScreen from './components/auth/LoginScreen';
 import PrincipalApp from './components/principal/PrincipalApp';
 import TeacherApp from './components/teacher/TeacherApp';
+import InstallBanner from './components/shared/InstallBanner';
 
 const DEFAULT_CONFIG = { classes: [], teachers: [], adminPin: '1234' };
 
@@ -33,10 +34,11 @@ export default function App() {
     await storageSet(CONFIG_KEY, next, true);
   }, []);
 
-  if (loading) return <LoadingScreen />;
-
-  if (!config) {
-    return (
+  let content;
+  if (loading) {
+    content = <LoadingScreen />;
+  } else if (!config) {
+    content = (
       <Shell>
         <div className="min-h-screen flex items-center justify-center p-6 text-center">
           <div>
@@ -46,16 +48,21 @@ export default function App() {
         </div>
       </Shell>
     );
+  } else if (!user) {
+    content = <LoginScreen config={config} onLogin={setUser} />;
+  } else if (user.role === 'principal') {
+    content = <PrincipalApp config={config} setConfig={setConfig} onLogout={() => setUser(null)} />;
+  } else {
+    // Re-resolve the teacher record from live config, in case the principal
+    // edited it (name/PIN/classes) after this person signed in.
+    const teacher = config.teachers.find((t) => t.id === user.teacher.id) || user.teacher;
+    content = <TeacherApp config={config} teacher={teacher} onLogout={() => setUser(null)} />;
   }
 
-  if (!user) return <LoginScreen config={config} onLogin={setUser} />;
-
-  if (user.role === 'principal') {
-    return <PrincipalApp config={config} setConfig={setConfig} onLogout={() => setUser(null)} />;
-  }
-
-  // Re-resolve the teacher record from live config, in case the principal
-  // edited it (name/PIN/classes) after this person signed in.
-  const teacher = config.teachers.find((t) => t.id === user.teacher.id) || user.teacher;
-  return <TeacherApp config={config} teacher={teacher} onLogout={() => setUser(null)} />;
+  return (
+    <>
+      <InstallBanner />
+      {content}
+    </>
+  );
 }
