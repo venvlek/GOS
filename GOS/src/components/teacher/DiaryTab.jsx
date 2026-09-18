@@ -85,7 +85,17 @@ function UploadSection({ termId, teacherId, teacherName, allSubjectsClasses, ass
     await storageSet(diaryUploadKey(teacherId, termId), next);
     setSavedAt(Date.now());
   };
-  const submit = () => persist({ ...record, submitted: true, submittedBy: teacherName, submittedAt: new Date().toISOString(), seenByPrincipal: false, seenAt: null });
+
+  // Uploading (or removing) the file IS the save — no separate submit step.
+  const handleDocChange = (doc) => persist({
+    ...record,
+    doc,
+    submitted: !!doc,
+    submittedBy: doc ? teacherName : null,
+    submittedAt: doc ? new Date().toISOString() : null,
+    seenByPrincipal: false,
+    seenAt: null,
+  });
 
   if (loading || !record) return <div style={{ fontSize: 13, color: C.inkSoft }}>Loading…</div>;
 
@@ -93,17 +103,14 @@ function UploadSection({ termId, teacherId, teacherName, allSubjectsClasses, ass
     <div className="space-y-4">
       <Card style={{ padding: 18 }}>
         <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>Term scheme of work <SavedTick savedAt={savedAt} /></div>
-        <div style={{ fontSize: 12.5, color: C.inkSoft, marginBottom: 12 }}>One upload covers everything below.</div>
+        <div style={{ fontSize: 12.5, color: C.inkSoft, marginBottom: 12 }}>One upload covers everything below. Saved automatically as soon as you upload.</div>
         <div className="flex flex-wrap gap-1.5 mb-4">
           {allSubjectsClasses.map((c) => <span key={c.id} className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: C.sageSoft, color: C.green }}>{c.name}</span>)}
           {assignments.map((a) => <span key={a.id} className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: C.sageSoft, color: C.green }}>{a.subject} — {a.className}</span>)}
         </div>
-        <DocUpload value={record.doc} onChange={(doc) => setRecord((r) => ({ ...r, doc }))} />
+        <DocUpload value={record.doc} onChange={handleDocChange} />
       </Card>
       {record.submitted && <ReviewPanel record={record} readOnly />}
-      <Button icon={Send} onClick={submit} disabled={!record.doc}>
-        {record.submitted ? 'Re-submit term scheme' : 'Submit term scheme to principal'}
-      </Button>
     </div>
   );
 }

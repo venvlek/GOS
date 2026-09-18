@@ -74,7 +74,17 @@ function UploadSection({ weekStart, teacherId, teacherName, allSubjectsClasses, 
     setSavedAt(Date.now());
   };
 
-  const submit = () => persist({ ...record, submitted: true, submittedBy: teacherName, submittedAt: new Date().toISOString(), seenByPrincipal: false, seenAt: null });
+  // Uploading (or removing) the file IS the save — no separate submit step,
+  // so there's no way to upload a replacement and forget to persist it.
+  const handleDocChange = (doc) => persist({
+    ...record,
+    doc,
+    submitted: !!doc,
+    submittedBy: doc ? teacherName : null,
+    submittedAt: doc ? new Date().toISOString() : null,
+    seenByPrincipal: false,
+    seenAt: null,
+  });
 
   if (loading || !record) return <div style={{ fontSize: 13, color: C.inkSoft }}>Loading…</div>;
 
@@ -83,7 +93,7 @@ function UploadSection({ weekStart, teacherId, teacherName, allSubjectsClasses, 
       <Card style={{ padding: 18 }}>
         <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 4 }}>This week's lesson note <SavedTick savedAt={savedAt} /></div>
         <div style={{ fontSize: 12.5, color: C.inkSoft, marginBottom: 12 }}>
-          One upload covers everything below — no need to repeat it per class or subject.
+          One upload covers everything below — no need to repeat it per class or subject. Saved automatically as soon as you upload.
         </div>
         <div className="flex flex-wrap gap-1.5 mb-4">
           {allSubjectsClasses.map((c) => (
@@ -93,14 +103,10 @@ function UploadSection({ weekStart, teacherId, teacherName, allSubjectsClasses, 
             <span key={a.id} className="px-2.5 py-1 rounded-full text-xs font-semibold" style={{ background: C.sageSoft, color: C.green }}>{a.subject} — {a.className}</span>
           ))}
         </div>
-        <DocUpload value={record.doc} onChange={(doc) => setRecord((r) => ({ ...r, doc }))} />
+        <DocUpload value={record.doc} onChange={handleDocChange} />
       </Card>
 
       {record.submitted && <ReviewPanel record={record} readOnly />}
-
-      <Button icon={Send} onClick={submit} disabled={!record.doc}>
-        {record.submitted ? 'Re-submit this week' : 'Submit this week to principal'}
-      </Button>
     </div>
   );
 }

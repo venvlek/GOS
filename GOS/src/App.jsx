@@ -18,6 +18,16 @@ export default function App() {
 
   useEffect(() => { init(); }, []);
 
+  useEffect(() => {
+    // Refresh whenever we're sitting at the login screen (including right
+    // after signing out) — otherwise a principal's change (a new class
+    // teacher assignment, a changed PIN, etc.) wouldn't show up for
+    // whoever logs in next until a full page reload.
+    if (!loading && !user) {
+      storageGet(CONFIG_KEY, true).then((fresh) => { if (fresh) setConfigState(fresh); });
+    }
+  }, [user, loading]);
+
   async function init() {
     let cfg = await storageGet(CONFIG_KEY, true);
     if (!cfg) {

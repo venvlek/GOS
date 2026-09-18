@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X } from 'lucide-react';
 import { C } from '../../lib/theme';
 import { uid } from '../../lib/storage';
@@ -18,6 +18,13 @@ export default function Teachers({ config, setConfig }) {
   const [assignments, setAssignments] = useState([]);
   const [newSubject, setNewSubject] = useState('');
   const [newClassId, setNewClassId] = useState(config.classes[0]?.id || '');
+  const editRef = useRef(null);
+
+  useEffect(() => {
+    if (editing && editRef.current) {
+      editRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [editing]);
 
   const startNew = () => {
     setEditing('new'); setName(''); setPin(''); setAssignments([]);
@@ -67,7 +74,7 @@ export default function Teachers({ config, setConfig }) {
       </div>
 
       {editing && (
-        <Card style={{ padding: 20 }}>
+        <Card style={{ padding: 20 }} ref={editRef}>
           <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 14 }}>{editing === 'new' ? 'New teacher' : 'Edit teacher'}</div>
           <div className="grid sm:grid-cols-2 gap-4 mb-5">
             <Field label="Full name"><TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Mr. Abel" /></Field>

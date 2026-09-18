@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { Plus, Trash2, ChevronDown, Sparkles } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Plus, Trash2, ChevronDown, Sparkles, Pencil, Check, X } from 'lucide-react';
 import { C } from '../../lib/theme';
 import { storageGet, storageSet, uid, studentsKey } from '../../lib/storage';
 import { PRIMARY_SEED } from '../../lib/primarySeed';
@@ -8,6 +8,8 @@ import EmptyState from '../ui/EmptyState';
 import Button from '../ui/Button';
 import Field from '../ui/Field';
 import { TextInput, TextArea, inputStyle } from '../ui/Inputs';
+
+const BLANK_DETAILS = { dob: '', guardianName: '', guardianAddress: '', guardianReligion: '', guardianPhone: '' };
 
 export default function ClassesStudents({ config, setConfig }) {
   const [selected, setSelected] = useState(config.classes[0]?.id || null);
@@ -20,14 +22,25 @@ export default function ClassesStudents({ config, setConfig }) {
   const [showBulk, setShowBulk] = useState(false);
   const [seeding, setSeeding] = useState(false);
 
+  const [editingStudentId, setEditingStudentId] = useState(null);
+  const [editForm, setEditForm] = useState(BLANK_DETAILS);
+  const editRef = useRef(null);
+
   useEffect(() => {
     if (!selected) { setStudents([]); return; }
     setLoadingStudents(true);
+    setEditingStudentId(null);
     storageGet(studentsKey(selected), true).then((s) => {
       setStudents(s || []);
       setLoadingStudents(false);
     });
   }, [selected]);
+
+  useEffect(() => {
+    if (editingStudentId && editRef.current) {
+      editRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [editingStudentId]);
 
   const primaryAlreadySeeded = PRIMARY_SEED.every((p) => config.classes.some((c) => c.name === p.name));
 
@@ -97,6 +110,23 @@ export default function ClassesStudents({ config, setConfig }) {
 
   const removeStudent = async (id) => {
     await saveStudents(students.filter((s) => s.id !== id));
+    if (editingStudentId === id) setEditingStudentId(null);
+  };
+
+  const startEditStudent = (s) => {
+    setEditingStudentId(s.id);
+    setEditForm({
+      dob: s.dob || '',
+      guardianName: s.guardianName || '',
+      guardianAddress: s.guardianAddress || '',
+      guardianReligion: s.guardianReligion || '',
+      guardianPhone: s.guardianPhone || '',
+    });
+  };
+  const cancelEditStudent = () => setEditingStudentId(null);
+  const saveStudentEdit = async () => {
+    await saveStudents(students.map((s) => (s.id === editingStudentId ? { ...s, ...editForm } : s)));
+    setEditingStudentId(null);
   };
 
   const selectedClass = config.classes.find((c) => c.id === selected);
@@ -216,11 +246,53 @@ export default function ClassesStudents({ config, setConfig }) {
               ) : (
                 <div className="divide-y" style={{ borderColor: C.line }}>
                   {students.map((s, i) => (
-                    <div key={s.id} className="flex items-center justify-between py-2.5" style={{ borderTop: i === 0 ? 'none' : `1px solid ${C.line}` }}>
-                      <div style={{ fontSize: 14 }}>{s.name}</div>
-                      <button onClick={() => removeStudent(s.id)} className="opacity-40 hover:opacity-100">
-                        <Trash2 size={14} color={C.rose} />
-                      </button>
+                    <div key={s.id} style={{ borderTop: i === 0 ? 'none' : `1px solid ${C.line}` }}>
+                      <div className="flex items-center justify-between py-2.5">
+                        <div>
+                          <div style={{ fontSize: 14 }}>{s.name}</div>
+                          {(s.dob || s.guardianName) && editingStudentId !== s.id && (
+                            <div style={{ fontSize: 11.5, color: C.inkSoft, marginTop: 1 }}>
+                              {s.dob && `DOB: ${s.dob}`}{s.dob && s.guardianName ? ' · ' : ''}{s.guardianName && `Guardian: ${s.guardianName}`}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <button onClick={() => (editingStudentId === s.id ? cancelEditStudent() : startEditStudent(s))} className="opacity-50 hover:opacity-100">
+                            <Pencil size={13} color={C.green} />
+                          </button>
+                          <button onClick={() => removeStudent(s.id)} className="opacity-40 hover:opacity-100">
+                            <Trash2 size={14} color={C.rose} />
+                          </button>
+                        </div>
+                      </div>
+
+                      {editingStudentId === s.id && (
+                        <div ref={editRef} className="pb-4 space-y-3" style={{ borderTop: `1px dashed ${C.line}`, paddingTop: 12 }}>
+                          <div className="grid sm:grid-cols-2 gap-3">
+                            <Field label="Date of birth">
+                              <TextInput type="date" value={editForm.dob} onChange={(e) => setEditForm({ ...editForm, dob: e.target.value })} />
+                            </Field>
+                            <Field label="Parent / guardian name">
+                              <TextInput value={editForm.guardianName} onChange={(e) => setEditForm({ ...editForm, guardianName: e.target.value })} placeholder="e.g. Mrs. Ade Obi" />
+                            </Field>
+                          </div>
+                          <Field label="Parent / guardian address">
+                            <TextInput value={editForm.guardianAddress} onChange={(e) => setEditForm({ ...editForm, guardianAddress: e.target.value })} placeholder="Home address" />
+                          </Field>
+                          <div className="grid sm:grid-cols-2 gap-3">
+                            <Field label="Parent / guardian religion">
+                              <TextInput value={editForm.guardianReligion} onChange={(e) => setEditForm({ ...editForm, guardianReligion: e.target.value })} placeholder="e.g. Christianity" />
+                            </Field>
+                            <Field label="Parent / guardian phone number">
+                              <TextInput value={editForm.guardianPhone} onChange={(e) => setEditForm({ ...editForm, guardianPhone: e.target.value })} placeholder="e.g. 0803…" />
+                            </Field>
+                          </div>
+                          <div className="flex gap-2">
+                            <Button size="sm" icon={Check} onClick={saveStudentEdit}>Save</Button>
+                            <Button size="sm" variant="ghost" icon={X} onClick={cancelEditStudent}>Cancel</Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
