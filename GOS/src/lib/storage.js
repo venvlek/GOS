@@ -52,3 +52,14 @@ export const lessonWeekKey = (classId, subject, weekStart) =>
 
 export const diaryKey = (classId, subject, termId) =>
   `diary:${classId}:${slug(subject)}:${termId}`;
+
+// A teacher's single weekly upload — covers every subject/class they teach
+// at once, so uploading one Word doc doesn't need repeating per subject.
+export const lessonUploadKey = (teacherId, weekStart) => `lessonUpload:${teacherId}:${weekStart}`;
+export const diaryUploadKey = (teacherId, termId) => `diaryUpload:${teacherId}:${termId}`;
+
+// Primary-style classes: one class teacher covers every subject, so the
+// weekly lesson note / termly diary is recorded at the CLASS level (each
+// manual entry carries its own subject), not per subject+class.
+export const lessonAllKey = (classId, weekStart) => `lessonAll:${classId}:${weekStart}`;
+export const diaryAllKey = (classId, termId) => `diaryAll:${classId}:${termId}`;
