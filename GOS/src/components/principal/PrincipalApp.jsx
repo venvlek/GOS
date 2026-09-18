@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { School, Users, PenLine, ClipboardCheck, NotebookPen, BookOpen, BarChart3, CalendarDays, Settings2 } from 'lucide-react';
+import { School, Users, PenLine, ClipboardCheck, NotebookPen, BookOpen, BarChart3, CalendarDays, Settings2, Table2 } from 'lucide-react';
 import Shell from '../ui/Shell';
 import TopBar from '../ui/TopBar';
 import TabBar from '../ui/TabBar';
@@ -11,11 +11,13 @@ import LessonNotes from './LessonNotes';
 import Diary from './Diary';
 import Statistics from './Statistics';
 import Calendar from './Calendar';
+import StudentsBroadsheet from './StudentsBroadsheet';
 import PrincipalSettings from './PrincipalSettings';
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: School },
   { id: 'classes', label: 'Classes & students', icon: Users },
+  { id: 'students', label: 'Students', icon: Table2 },
   { id: 'teachers', label: 'Teachers', icon: PenLine },
   { id: 'attendance', label: 'Attendance', icon: ClipboardCheck },
   { id: 'lessonnotes', label: 'Lesson notes', icon: NotebookPen },
@@ -36,6 +38,7 @@ export default function PrincipalApp({ config, setConfig, onLogout }) {
         <div className="p-5 max-w-5xl mx-auto">
           {tab === 'overview' && <Overview config={config} />}
           {tab === 'classes' && <ClassesStudents config={config} setConfig={setConfig} />}
+          {tab === 'students' && <StudentsBroadsheet config={config} />}
           {tab === 'teachers' && <Teachers config={config} setConfig={setConfig} />}
           {tab === 'attendance' && <RecordsViewer config={config} />}
           {tab === 'lessonnotes' && <LessonNotes config={config} />}

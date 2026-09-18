@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ClipboardCheck, NotebookPen, BookOpen, BarChart3 } from 'lucide-react';
+import { ClipboardCheck, NotebookPen, BookOpen, BarChart3, Table2 } from 'lucide-react';
 import Shell from '../ui/Shell';
 import TopBar from '../ui/TopBar';
 import TabBar from '../ui/TabBar';
@@ -7,9 +7,11 @@ import AttendanceTab from './AttendanceTab';
 import LessonNotesTab from './LessonNotesTab';
 import DiaryTab from './DiaryTab';
 import StatisticsTab from './StatisticsTab';
+import StudentsTab from './StudentsTab';
 
 const TABS = [
   { id: 'attendance', label: 'Attendance', icon: ClipboardCheck },
+  { id: 'students', label: 'Students', icon: Table2 },
   { id: 'lessonnotes', label: 'Lesson notes', icon: NotebookPen },
   { id: 'diary', label: 'Diary', icon: BookOpen },
   { id: 'stats', label: 'Statistics', icon: BarChart3 },
@@ -41,6 +43,7 @@ export default function TeacherApp({ config, teacher, onLogout }) {
         <TabBar tabs={TABS} active={tab} onChange={setTab} />
         <div className="p-5 max-w-3xl mx-auto">
           {tab === 'attendance' && <AttendanceTab classes={classTeacherClasses} teacherName={teacher.name} />}
+          {tab === 'students' && <StudentsTab classes={classTeacherClasses} />}
           {tab === 'lessonnotes' && (
             <LessonNotesTab
               allSubjectsClasses={allSubjectsClasses}
